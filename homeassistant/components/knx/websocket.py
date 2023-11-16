@@ -13,7 +13,12 @@ from homeassistant.core import HomeAssistant, callback
 
 from .const import DOMAIN
 from .helpers.entity_store import EntityStoreException
-from .helpers.entity_store_schema import CREATE_ENTITY_SCHEMA, UPDATE_ENTITY_SCHEMA
+from .helpers.entity_store_schema import (
+    CREATE_ENTITY_BASE_SCHEMA,
+    DELETE_ENTITY_SCHEMA,
+    ENTITY_STORE_DATA_SCHEMA,
+    UPDATE_ENTITY_BASE_SCHEMA,
+)
 from .telegrams import TelegramDict
 
 if TYPE_CHECKING:
@@ -221,9 +226,10 @@ def ws_subscribe_telegram(
         websocket_api.BASE_COMMAND_MESSAGE_SCHEMA.extend(
             {
                 vol.Required("type"): "knx/create_entity",
-                vol.Required("data"): CREATE_ENTITY_SCHEMA,
+                **CREATE_ENTITY_BASE_SCHEMA,
             }
         ),
+        ENTITY_STORE_DATA_SCHEMA,
     )
 )
 @websocket_api.async_response
@@ -235,7 +241,7 @@ async def ws_create_entity(
     """Handle get info command of group monitor."""
     knx: KNXModule = hass.data[DOMAIN]
     try:
-        await knx.entity_store.create_entitiy(msg["data"]["platform"], msg["data"])
+        await knx.entity_store.create_entitiy(msg["platform"], msg["data"])
     except EntityStoreException as err:
         connection.send_error(
             msg["id"], websocket_api.const.ERR_HOME_ASSISTANT_ERROR, str(err)
@@ -250,9 +256,10 @@ async def ws_create_entity(
         websocket_api.BASE_COMMAND_MESSAGE_SCHEMA.extend(
             {
                 vol.Required("type"): "knx/update_entity",
-                vol.Required("data"): UPDATE_ENTITY_SCHEMA,
+                **UPDATE_ENTITY_BASE_SCHEMA,
             }
         ),
+        ENTITY_STORE_DATA_SCHEMA,
     )
 )
 @websocket_api.async_response
@@ -265,7 +272,7 @@ async def ws_update_entity(
     knx: KNXModule = hass.data[DOMAIN]
     try:
         await knx.entity_store.update_entity(
-            msg["data"]["platform"], msg["data"]["unique_id"], msg["data"]
+            msg["platform"], msg["unique_id"], msg["data"]
         )
     except EntityStoreException as err:
         connection.send_error(
@@ -279,8 +286,7 @@ async def ws_update_entity(
 @websocket_api.websocket_command(
     {
         vol.Required("type"): "knx/delete_entity",
-        vol.Required("platform"): str,
-        vol.Required("unique_id"): str,
+        **DELETE_ENTITY_SCHEMA,
     }
 )
 @websocket_api.async_response
