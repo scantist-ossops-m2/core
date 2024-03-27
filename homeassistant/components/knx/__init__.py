@@ -63,7 +63,8 @@ from .const import (
     DATA_KNX_CONFIG,
     DOMAIN,
     KNX_ADDRESS,
-    SUPPORTED_PLATFORMS,
+    SUPPORTED_PLATFORMS_UI,
+    SUPPORTED_PLATFORMS_YAML,
     TELEGRAM_LOG_DEFAULT,
 )
 from .device import KNXInterfaceDevice
@@ -193,16 +194,19 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                 create_knx_exposure(hass, knx_module.xknx, expose_config)
             )
     # always forward sensor for system entities (telegram counter, etc.)
-    await hass.config_entries.async_forward_entry_setup(entry, Platform.SENSOR)
-    # TODO: forward all platforms to get entity store connected
-    await hass.config_entries.async_forward_entry_setup(entry, Platform.SWITCH)
+    # forward all platforms that support UI entity management
+    await hass.config_entries.async_forward_entry_setups(
+        entry, {Platform.SENSOR} | SUPPORTED_PLATFORMS_UI
+    )
+    # forward yaml-only managed platforms on demand
     await hass.config_entries.async_forward_entry_setups(
         entry,
         [
             platform
-            for platform in SUPPORTED_PLATFORMS
+            for platform in SUPPORTED_PLATFORMS_YAML
             if platform in config
-            and platform not in (Platform.SENSOR, Platform.SWITCH, Platform.NOTIFY)
+            and platform
+            not in SUPPORTED_PLATFORMS_UI | {Platform.SENSOR, Platform.NOTIFY}
         ],
     )
 
@@ -231,15 +235,15 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     unload_ok = await hass.config_entries.async_unload_platforms(
         entry,
-        [
+        {
             Platform.SENSOR,  # always unload system entities (telegram counter, etc.)
-            *[
-                platform
-                for platform in SUPPORTED_PLATFORMS
-                if platform in hass.data[DATA_KNX_CONFIG]
-                and platform not in (Platform.SENSOR, Platform.NOTIFY)
-            ],
-        ],
+        }
+        | SUPPORTED_PLATFORMS_UI
+        | {
+            platform
+            for platform in SUPPORTED_PLATFORMS_YAML
+            if platform in hass.data[DATA_KNX_CONFIG] and platform != Platform.NOTIFY
+        },
     )
     if unload_ok:
         await knx_module.stop()
