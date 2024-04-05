@@ -43,8 +43,9 @@ __all__ = [
     "async_converse",
     "async_get_agent_info",
     "async_set_agent",
-    "async_unset_agent",
     "async_setup",
+    "async_unset_agent",
+    "ConversationEntity",
     "ConversationInput",
     "ConversationResult",
 ]
@@ -227,3 +228,15 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     async_setup_conversation_http(hass)
 
     return True
+
+
+async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+    """Set up a config entry."""
+    component: EntityComponent[ConversationEntity] = hass.data[DOMAIN]
+    return await component.async_setup_entry(entry)
+
+
+async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+    """Unload a config entry."""
+    component: EntityComponent[ConversationEntity] = hass.data[DOMAIN]
+    return await component.async_unload_entry(entry)
