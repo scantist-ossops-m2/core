@@ -117,6 +117,9 @@ class AgentManager:
         """List all agents."""
         agents: list[AgentInfo] = []
         for agent_id, agent in self._agents.items():
+            if agent.legacy_agent:
+                continue
+
             config_entry = self.hass.config_entries.async_get_entry(agent_id)
 
             # Guard against potential bugs in conversation agents where the agent is not

@@ -45,6 +45,10 @@ class OpenAIConversationEntity(
 ):
     """OpenAI conversation agent."""
 
+    # This allows the entity to also be used as a conversation agent
+    # but not show up as one. For backwards compat.
+    legacy_agent = True
+
     def __init__(self, hass: HomeAssistant, entry: ConfigEntry) -> None:
         """Initialize the agent."""
         self.hass = hass

@@ -47,6 +47,8 @@ class ConversationResult:
 class AbstractConversationAgent(ABC):
     """Abstract conversation agent."""
 
+    legacy_agent: bool = False
+
     @property
     @abstractmethod
     def supported_languages(self) -> list[str] | Literal["*"]:
