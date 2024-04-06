@@ -113,7 +113,8 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
             DOMAIN,
             {},
             config,
-        )
+        ),
+        eager_start=True,
     )
 
     return True
