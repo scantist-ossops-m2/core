@@ -24,7 +24,6 @@ LAST_SCANNED = "last_scanned"
 STORAGE_KEY = DOMAIN
 STORAGE_VERSION = 1
 TAGS = "tags"
-TAGS_ENTITIES = "tags_entities"
 
 CREATE_FIELDS = {
     vol.Optional(TAG_ID): cv.string,
